@@ -13,6 +13,7 @@ import VisualizationResult from "./VisualizationResult";
 import Warnings from "./Warnings";
 
 const SLOW_MESSAGE_TIMEOUT = 4000;
+const SLOWER_MESSAGE_TIMEOUT = 8000;
 
 export default function QueryVisualization(props) {
   const {
@@ -85,8 +86,19 @@ export const VisualizationEmptyState = ({ className }) => (
 
 export function VisualizationRunningState({ className = "", loadingMessage }) {
   const [isSlow] = useTimeout(SLOW_MESSAGE_TIMEOUT);
+  const [isSlower] = useTimeout(SLOWER_MESSAGE_TIMEOUT);
 
-  const message = isSlow() ? t`Talking to the database...` : loadingMessage;
+  let message = loadingMessage;
+
+  if (loadingMessage === "Doing science...") {
+    if (isSlower()) {
+      message = t`Doing science...`;
+    } else if (isSlow()) {
+      message = t`Waiting for results...`;
+    } else {
+      message = t`Talking to the database...`;
+    }
+  }
 
   return (
     <div
