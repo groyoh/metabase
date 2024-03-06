@@ -54,7 +54,9 @@ If your database supports a JDBC connection, Metabase will provide you with a fi
 
 You'll need to specify the location of the certificate on the server that's running Metabase.
 
-For example, when connecting to a PostgreSQL database, you'll need to add two parameters:
+#### PostgreSQL
+
+When connecting to a PostgreSQL database, you'll need to add two parameters:
 
 - `sslmode`. You can see the full list of options in [PostgreSQL's documentation](https://jdbc.postgresql.org/documentation/ssl/#configuring-the-client). We recommend you use `verify-full`; it's the most secure, and overhead is minimal.
 - `sslrootcert`. Here you'll specify the file path for the certificate.
@@ -68,6 +70,23 @@ sslmode=verify-full&sslrootcert=/path/to/certificate.pem
 Replace `/path/to/certifcate.pem` with the full path for the certificate you downloaded from your provider.
 
 You can learn more about [SSL support for PostgreSQL](https://www.postgresql.org/docs/current/libpq-ssl.html).
+
+#### MySQL
+
+When connecting to a MySQL database, you'll need to add two parameters:
+
+- `sslMode`. You can see the full list of options in [MySQL's documentation](https://dev.mysql.com/doc/connector-j/en/connector-j-reference-using-ssl.html). We recommend you use `VERIFY_IDENTIFY`; it's the most secure.
+- `serverSslCert`. Here you'll specify the file path for the certificate.
+
+You'll add an ampersand (`&`) to separate each parameter. For example, In the **Add additional connection string options** field, you'd add something like:
+
+```
+sslMode=VERIFY_IDENTIFY&serverSslCert=/path/to/certificate.pem
+```
+
+Replace `/path/to/certifcate.pem` with the full path for the certificate you downloaded from your provider.
+
+You can learn more about [SSL support for MySQL](https://dev.mysql.com/doc/refman/8.0/en/using-encrypted-connections.html).
 
 ## Securing connection to application database using environment variables
 
