@@ -15,6 +15,8 @@ import type {
   ChartDataset,
   Datum,
   XAxisModel,
+  TimeSeriesXAxisModel,
+  NumericXAxisModel,
 } from "metabase/visualizations/echarts/cartesian/model/types";
 import type {
   ComputedVisualizationSettings,
@@ -119,28 +121,47 @@ export const buildEChartsLabelOptions = (
   };
 };
 
+export const computeContinuousScaleBarWidth = (
+  xAxisModel: TimeSeriesXAxisModel | NumericXAxisModel,
+  boundaryWidth: number,
+  barSeriesCount: number,
+  yAxisWithBarSeriesCount: number,
+  stackedOrSingleSeries: boolean,
+) => {
+  let barWidth =
+    (boundaryWidth / (xAxisModel.intervalsCount + 2)) *
+    CHART_STYLE.series.barWidth;
+
+  if (!stackedOrSingleSeries) {
+    barWidth /= barSeriesCount;
+  }
+
+  barWidth /= yAxisWithBarSeriesCount;
+
+  return barWidth;
+};
+
 export const computeBarWidth = (
   xAxisModel: XAxisModel,
-  chartMeasurements: ChartMeasurements,
+  boundaryWidth: number,
   barSeriesCount: number,
   yAxisWithBarSeriesCount: number,
   isStacked: boolean,
 ) => {
-  let barWidth: string | number | undefined = undefined;
   const stackedOrSingleSeries = isStacked || barSeriesCount === 1;
   const isNumericOrTimeSeries = "intervalsCount" in xAxisModel;
 
   if (isNumericOrTimeSeries) {
-    barWidth =
-      (chartMeasurements.boundaryWidth / (xAxisModel.intervalsCount + 2)) *
-      CHART_STYLE.series.barWidth;
-
-    if (!stackedOrSingleSeries) {
-      barWidth /= barSeriesCount;
-    }
-
-    barWidth /= yAxisWithBarSeriesCount;
+    return computeContinuousScaleBarWidth(
+      xAxisModel,
+      boundaryWidth,
+      barSeriesCount,
+      yAxisWithBarSeriesCount,
+      stackedOrSingleSeries,
+    );
   }
+
+  let barWidth: string | number | undefined = undefined;
 
   if (isCategoryAxis(xAxisModel) && xAxisModel.isHistogram) {
     const barWidthPercent = stackedOrSingleSeries
@@ -190,7 +211,7 @@ const buildEChartsBarSeries = (
     stack: stackName,
     barWidth: computeBarWidth(
       xAxisModel,
-      chartMeasurements,
+      chartMeasurements.boundaryWidth,
       barSeriesCount,
       yAxisWithBarSeriesCount,
       !!stackName,
