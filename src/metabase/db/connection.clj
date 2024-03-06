@@ -143,14 +143,17 @@
 
 (def ^:private ^:dynamic *transaction-depth* 0)
 
-(defn- do-transaction [^java.sql.Connection connection f]
+(defn- do-transaction [^java.sql.Connection connection f {:keys [rollback-only]}]
   (letfn [(thunk []
             (let [savepoint (.setSavepoint connection)]
               (try
                 (let [result (f connection)]
-                  (when (= *transaction-depth* 1)
-                    ;; top-level transaction, commit
-                    (.commit connection))
+                  (if rollback-only
+                    ;; commit only happens on top-level, but any inner tx can ask to be rollback-only
+                    (.rollback connection savepoint)
+                    (when (= *transaction-depth* 1)
+                      ;; top-level transaction, commit
+                      (.commit connection)))
                   result)
                 (catch Throwable e
                   (.rollback connection savepoint)
@@ -196,4 +199,4 @@
 
    :else
    (binding [*transaction-depth* (inc *transaction-depth*)]
-     (do-transaction connection f))))
+     (do-transaction connection f options))))
